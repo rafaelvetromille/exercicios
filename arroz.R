@@ -45,7 +45,7 @@ arroz <- base %>%
 ## 3. IMPORTAR DADOS DA TAXA DE CÂMBIO
 dolar <- rbcb::get_series(code = list(dolar = '3698'))
 
-## 4. Juntar tibbles
+## 4. JUNTAR TIBBLES
 dados <- arroz %>%
   left_join(dolar, by = "date")
 
