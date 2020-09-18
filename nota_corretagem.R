@@ -63,7 +63,7 @@ valores = out %>%
   mutate(across(.cols = where(is.character),
                 .fns = ~ parse_number(.x, locale = locale(decimal_mark = ","))))
 
-## 6. Resultado final
+## 6. Resultado final.
 final <- bind_cols(df, titulo, valores) %>%
   mutate(across(where(is.character), str_to_upper)) %>%
   rename_all(toupper)
