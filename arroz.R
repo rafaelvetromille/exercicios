@@ -1,24 +1,19 @@
-## 1. Pacotes
+## 1. PACOTES
 library(readr)
 library(tidyverse)
 library(lubridate)
 library(scales)
 library(httr)
 
-## 2. Leitura dos dados
-
+## 2. LEITURA DOS DADOS
 temp <- tempfile()
-
 download.file(
   url = "http://www.mdic.gov.br/balanca/bd/comexstat-bd/ncm/EXP_COMPLETA.zip",
   destfile = temp)
-
 datazip <- unzip(temp, files = 'EXP_COMPLETA.csv')
-
 base <- read_csv2(datazip)
 
-## Códicos ncm
-
+## 3. CÓDIGOS NCM - Nomenclatura Comum do Mercosul
 ncm <- read_csv2("http://www.mdic.gov.br/balanca/bd/tabelas/NCM.csv",
                  locale = locale(encoding = "Latin1")) %>%
   janitor::clean_names() %>%
@@ -27,6 +22,7 @@ ncm <- read_csv2("http://www.mdic.gov.br/balanca/bd/tabelas/NCM.csv",
   filter(str_detect(codigo, pattern = "^1006")) %>%
   pull(codigo)
 
+## 4. BASE DE DADOS (TIDY)
 arroz <- base %>%
   janitor::clean_names() %>%
   dplyr::filter(co_ncm %in% ncm) %>%
@@ -46,15 +42,16 @@ arroz <- base %>%
   dplyr::relocate(date) %>%
   dplyr::arrange(desc(date))
 
-## 3. Importar dados da taxa de câmbio
+## 3. IMPORTAR DADOS DA TAXA DE CÂMBIO
 dolar <- rbcb::get_series(code = list(dolar = '3698'))
 
 ## 4. Juntar tibbles
 dados <- arroz %>%
   left_join(dolar, by = "date")
 
-## 6. Construindo gráficos
+## 6. CONTRUINDO GRÁFICOS
 
+## FUNÇÃO AUXILIAR (UNITS)
 addUnits <- function(n) {
   labels <- ifelse(n < 1000, n,  # less than thousands
                    ifelse(n < 1e6, paste0(round(n/1e3), 'k'),  # in thousands
@@ -65,8 +62,7 @@ addUnits <- function(n) {
   return(labels)
 }
 
-### Gráfico de Linha com eixo secundário
-
+## GRÁFICO DE LINHA COM EIXO SECUNDÁRIO
 limits <- dados %>%
   filter(date >= '2010-01-01') %>%
   slice_max(date, n = 5) %>%
@@ -96,8 +92,7 @@ ggplot(aes(x = date, y = ton)) +
   labs(title = 'Exportações de Arroz vs. Taxa de Câmbio',
        caption = 'Fonte: Elaboração própria com dados do BACEN e MDIC.')
 
-## Gráfico de coluna com eixo secundário
-
+## GRÁFICO DE COLUNA COM EIXO SECUNDÁRIO
 ggplot(data = dados) +
   geom_col(aes(x = data, y = ton)) +
   geom_line(aes(x = data, y = dolar * 30000), size = 1, color = "red") +
